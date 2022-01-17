@@ -1,0 +1,43 @@
+iamRole: APIRole
+vpc:
+  securityGroupIds:
+    - sg-randomSG
+  subnetIds:
+    - subnet-sg-randomSG
+    - subnet-sg-randomSG
+serverless-offline:
+  useChildProcesses: true
+profile: dev
+browserify:
+  exclude:
+    - aws-sdk
+apiKeys:
+  - name: dev-key
+domainName: api.sample-dev.com
+financialAPIKey: dasdawafaefesafafwadadas
+apiSecKey: true
+basePath: mynotif
+dbConfig:
+  notifcontentddbtable: notifcontent-dev
+  notifuserddbtable: notifuser-dev
+  uiddbtable: uidb-dev
+cognitoDomain: https://sample-dev.com/all
+apiOrigins:
+  - https://sample-dev..com
+  - http://localhost:4200
+  - http://localhost
+  - capacitor://localhost
+  - http://192.168.1.1:8100
+  - http://localhost:8100
+authorizerArn: arn:aws:cognito-idp:us-east-1:#{AWS::AccountId}:hiajfdawnfawu
+apiScopes:
+  - https://sample-dev.com/all
+  - http://localhost:4200/all
+customDomain:
+  domainName: ${self:custom.domainName}
+  stage: ${self:custom.profile}
+  basePath: ${self:custom.basePath}
+  certificatName: dajwidmawicmdwdada
+endpoints:
+  welcome: /
+  isRead: /isRead

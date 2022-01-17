@@ -1,0 +1,100 @@
+
+service: sample-api
+
+plugins:
+  - serverless-offline
+  - serverless-add-api-key
+  - serverless-domain-manager
+  - serverless-plugin-browserifier
+  - serverless-pseudo-parameters
+  - serverless-plugin-warmup
+
+# For granular packaging of files, better to exclude all files first then add on demand basis per function
+package:
+  individually: true
+  exclude:
+    - "*/**"
+    - "*"
+
+# Custom variables that can vary per environment; This can be separated to multiple files per environment
+custom: ${file(./config/${self:provider.stage}.yml)}
+
+provider:
+  name: aws
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'us-east-1'}
+  runtime: nodejs12.x
+  stackName: # name of stack that will be created
+  deploymentBucket:
+    name: sample.deployment.${self:provider.stage}
+  role: arn:aws:iam::#{AWS::AccountId}:role/${self:custom.iamRole}
+  profile: ${self:custom.profile} # AWS profile to be used
+  vpc: ${self:custom.vpc} # AWS VPC configuration to be used
+
+functions:
+  # welcome function to be tested if deployment is successful
+  welcomeFunction:
+    handler: src/handlers/welcome.handler
+    package:
+      patterns:
+        - src/handlers/welcome
+    name: vip-${self:service}-welcome-${self:provider.stage}
+    description: Welcome function
+    timeout: 30
+    # Environment variables for lambda
+    environment:
+      PIPELINE_NAME: ${self:service}
+
+    events:
+      - http:
+          path: ${self:custom.endpoints.welcome}
+          method: GET
+          authorizer:
+            arn: ${self:custom.authorizerArn}
+            scopes: ${self:custom.apiScopes}
+          cors:
+            origins: ${self:custom.apiOrigins}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - vip-user-authorized
+              - Origin
+            allowCredentials: true
+          private: true
+
+  isReadFunction:
+    handler: src/handlers/isRead.handler
+    package: # add all the files that will make the function complete
+      patterns:
+        # TODO Remove unnecessary packages
+        - src/handlers/isRead
+    name: project-${self:service}-isRead-${self:provider.stage}
+    description: Notifications /isRead endpoint Lambda
+    timeout: 30
+    environment: # Environment variables for lambda
+      STAGE: ${self:provider.stage}
+      REGION: ${self:provider.region}
+      NOTIF_USER_DB: ${self:custom.dbConfig.notifuserddbtable}
+    events:
+      - http:
+          path: ${self:custom.endpoints.isRead}
+          method: POST
+          authorizer:
+            arn: ${self:custom.authorizerArn}
+            scopes: ${self:custom.apiScopes}
+          cors:
+            origins: ${self:custom.apiOrigins}
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - vip-user-authorized
+              - Origin
+            allowCredentials: true
+          private: true
+
